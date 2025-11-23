@@ -27,7 +27,12 @@ const dbConfig = {
   port: process.env.MYSQLPORT || process.env.DB_PORT || 3306
 };
 
-app.use(cors());
+app.use(cors({
+  origin: '*', 
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 
@@ -230,7 +235,7 @@ app.post('/api/webpay/create', async (req, res) => {
   const buyOrder = "O-" + Math.floor(Math.random() * 100000);
   const sessionId = "S-" + userId;
   // IMPORTANTE: Cuando subas a producción, cambia esta URL
-  const returnUrl = (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'http://localhost:4000') + '/api/webpay/commit';
+  const returnUrl = (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://backend-star-rail-production.up.railway.app` : 'https://backend-star-rail-production.up.railway.app') + '/api/webpay/commit';
 
   try {
     const connection = await mysql.createConnection(dbConfig);
