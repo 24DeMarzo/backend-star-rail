@@ -6,14 +6,37 @@ const JWT_SECRET = process.env.JWT_SECRET || 'este-es-un-secreto-muy-secreto';
 
 export const register = async (req, res) => {
   const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
+  }
+
   let connection;
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
     connection = await pool.getConnection();
+
+    // Verificar si el email ya existe
+    const [emailExists] = await connection.execute('SELECT id FROM users WHERE email = ?', [email]);
+    if (emailExists.length > 0) {
+      return res.status(409).json({ message: 'El correo electrónico ya está registrado.' });
+    }
+
+    // Verificar si el nombre de usuario ya existe
+    const [usernameExists] = await connection.execute('SELECT id FROM users WHERE username = ?', [username]);
+    if (usernameExists.length > 0) {
+      return res.status(409).json({ message: 'El nombre de usuario ya está en uso.' });
+    }
+
+    // Si no existen, proceder con el registro
+    const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await connection.execute('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, hashedPassword]);
-    res.status(201).json({ message: 'Registrado', userId: result.insertId });
+    
+    res.status(201).json({ message: '¡Registro exitoso! Ahora puedes iniciar sesión.', userId: result.insertId });
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error en el registro:', error); // Log para depuración en el servidor
+    res.status(500).json({ message: 'Error interno del servidor. Por favor, inténtalo de nuevo más tarde.' });
+  
   } finally {
     if (connection) connection.release();
   }
