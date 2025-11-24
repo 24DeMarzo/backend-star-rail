@@ -119,6 +119,15 @@ app.use('/api', authRoutes);
 
   app.get('/', (req, res) => res.send('Backend Star Rail API v1.0 - Online 🟢'));
 
+  app.post('/api/register', async (req, res) => {
+  console.log("🚨 RUTA DE EMERGENCIA ALCANZADA");
+  console.log("Datos recibidos:", req.body);
+  
+  res.json({ message: "¡CONEXIÓN EXITOSA! El problema está en el archivo auth.js" });
+});
+// ------------------------------------
+
+
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
