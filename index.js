@@ -111,7 +111,7 @@ app.post('/api/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const [result] = await pool.query(
-      "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'user')",
+      'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, "admin")',
       [username, email, hashedPassword]
     );
 

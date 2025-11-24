@@ -3,7 +3,7 @@ import 'dotenv/config';
 
 const pool = createPool({
   host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
-  user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+  user: process.env.MYSQLUSER || process.env.DB_USaER || 'root',
   password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
   port: process.env.MYSQLPORT || process.env.DB_PORT || 3306,
   database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'railway',
