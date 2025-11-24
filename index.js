@@ -10,33 +10,13 @@ import webpayRoutes from './routes/webpay.js';
 import dashboardRoutes from './routes/dashboard.js';
 import messageRoutes from './routes/messages.js';
 
-const app = express();
-const PORT = process.env.PORT || 4000;
-
-// Configuración de CORS más segura
-const whitelist = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173,https://frontend-star-rail-qgx3.vercel.app').split(',');
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('No permitido por CORS'));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-};
-
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 async function inicializarBaseDeDatos() {
   let connection;
   try {
+    console.log("  [DB] Obteniendo conexión del pool...");
     connection = await pool.getConnection();
-    console.log("🛠️ Verificando estado de la Base de Datos...");
+    console.log("  [DB] Conexión obtenida. Verificando/creando tablas...");
+
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT NOT NULL AUTO_INCREMENT,
@@ -48,6 +28,7 @@ async function inicializarBaseDeDatos() {
         PRIMARY KEY (id)
       )
     `);
+
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS products (
         id INT NOT NULL AUTO_INCREMENT,
@@ -57,9 +38,12 @@ async function inicializarBaseDeDatos() {
         PRIMARY KEY (id)
       )
     `);
+    
+    console.log("  [DB] Tabla 'users' y 'products' aseguradas.");
+
     const [rows] = await connection.execute('SELECT COUNT(*) as total FROM products');
     if (rows[0].total === 0) {
-      console.log("📦 Tabla productos vacía. Insertando datos iniciales...");
+      console.log("  [DB] Tabla 'products' vacía. Insertando datos iniciales...");
       await connection.execute(`
         INSERT INTO products (nombre, precio, imagen) VALUES
         ('60 Esquirlas Oníricas', 0.99, 'img/esquirla-60.png'),
@@ -71,7 +55,9 @@ async function inicializarBaseDeDatos() {
         ('Boleto de Suministro Expreso', 4.99, 'img/boleto.png'),
         ('Honor Sin Nombre (Gloria)', 9.99, 'img/pase-gloria.png')
       `);
+      console.log("  [DB] Datos iniciales de productos insertados.");
     }
+
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS orders (
         id INT NOT NULL AUTO_INCREMENT,
@@ -86,6 +72,7 @@ async function inicializarBaseDeDatos() {
         FOREIGN KEY (user_id) REFERENCES users(id)
       )
     `);
+
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS messages (
         id INT NOT NULL AUTO_INCREMENT,
@@ -97,27 +84,71 @@ async function inicializarBaseDeDatos() {
         PRIMARY KEY (id)
       )
     `);
-    console.log("✅ Base de Datos lista y actualizada.");
+    console.log("  [DB] Tabla 'orders' y 'messages' aseguradas.");
+
   } catch (error) {
-    console.error("❌ Error inicializando DB:", error.message);
+    console.error("❌ Error durante la inicialización de la base de datos:", error);
+    throw error; // Lanzamos el error para que el proceso principal falle
   } finally {
-    if (connection) connection.release();
+    if (connection) {
+      connection.release();
+      console.log("  [DB] Conexión a la base de datos liberada.");
+    }
   }
 }
 
-app.get('/', (req, res) => res.send('Backend Star Rail API v1.0'));
+async function main() {
+  try {
+    console.log("🚀 [1/4] Iniciando servidor...");
+    
+    // 1. Inicializar la base de datos primero.
+    console.log("🛠️ [2/4] Preparando base de datos...");
+    await inicializarBaseDeDatos();
+    console.log("✅ [2/4] Base de datos lista.");
 
-// Usar rutas
-app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/webpay', webpayRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/messages', messageRoutes);
+    // 2. Crear y configurar la aplicación Express.
+    console.log("🌐 [3/4] Configurando la aplicación Express...");
+    const app = express();
+    const PORT = process.env.PORT || 4000;
 
-inicializarBaseDeDatos().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-  });
-});
+    const whitelist = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173,https://frontend-star-rail-qgx3.vercel.app').split(',');
+    const corsOptions = {
+      origin: function (origin, callback) {
+        if (!origin || whitelist.indexOf(origin) !== -1) {
+          callback(null, true);
+        } else {
+          callback(new Error('No permitido por CORS'));
+        }
+      },
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"]
+    };
+
+    app.use(cors(corsOptions));
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+
+    // Configuración de rutas
+    app.use('/api/auth', authRoutes);
+    app.use('/api/products', productRoutes);
+    app.use('/api/orders', orderRoutes);
+    app.use('/api/users', userRoutes);
+    app.use('/api/webpay', webpayRoutes);
+    app.use('/api/dashboard', dashboardRoutes);
+    app.use('/api/messages', messageRoutes);
+    app.get('/', (req, res) => res.send('Backend Star Rail API v1.0 - Healthy'));
+    console.log("✅ [3/4] Aplicación Express configurada.");
+
+    // 3. Iniciar el servidor para escuchar peticiones.
+    console.log("👂 [4/4] Iniciando servidor para escuchar en el puerto...");
+    app.listen(PORT, () => {
+      console.log(`✅ [4/4] Servidor corriendo y escuchando en el puerto ${PORT}`);
+    });
+
+  } catch (error) {
+    console.error("❌ Error fatal durante el arranque del servidor. El proceso terminará.", error);
+    process.exit(1); // Salir con código de error
+  }
+}
+
+main();
