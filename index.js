@@ -80,7 +80,17 @@ async function createTables() {
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors({ origin: '*', methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"] }));
+app.use(cors({
+  origin: [
+    'https://frontend-star-rail-qgx3.vercel.app',
+    'https://frontend-star-rail-qgx3-56itxk7tk-arukus-projects.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 app.use(express.json());
 
 app.use((req, res, next) => {
