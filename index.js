@@ -98,10 +98,17 @@ async function main() {
     allowedHeaders: ["Content-Type", "Authorization"]
   }));
 
-  app.use(express.json());
+app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  app.use('/api', authRoutes);
+  app.use((req, res, next) => {
+    console.log(`📥 Petición recibida: ${req.method} ${req.url}`);
+    next();
+  });
+
+  app.use('/api/auth', authRoutes); 
+  app.use('/api', authRoutes);      
+
   app.use('/api/products', productRoutes);
   app.use('/api/orders', orderRoutes);
   app.use('/api/users', userRoutes);
