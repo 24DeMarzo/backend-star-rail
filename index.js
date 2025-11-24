@@ -91,6 +91,8 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+
 app.use(express.json());
 
 app.use((req, res, next) => {
