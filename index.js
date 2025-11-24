@@ -101,7 +101,7 @@ async function main() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  app.use('/api/auth', authRoutes);
+  app.use('/api', authRoutes);
   app.use('/api/products', productRoutes);
   app.use('/api/orders', orderRoutes);
   app.use('/api/users', userRoutes);
