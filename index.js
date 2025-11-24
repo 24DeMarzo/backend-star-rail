@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Configuración de CORS más segura
-const whitelist = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173').split(',');
+const whitelist = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173,https://frontend-star-rail-qgx3.vercel.app').split(',');
 
 const corsOptions = {
   origin: function (origin, callback) {
