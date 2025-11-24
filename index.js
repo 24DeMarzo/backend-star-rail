@@ -13,9 +13,7 @@ import messageRoutes from './routes/messages.js';
 async function inicializarBaseDeDatos() {
   let connection;
   try {
-    console.log("  [DB] Obteniendo conexión del pool...");
     connection = await pool.getConnection();
-    console.log("  [DB] Conexión obtenida. Verificando/creando tablas...");
 
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
@@ -38,12 +36,9 @@ async function inicializarBaseDeDatos() {
         PRIMARY KEY (id)
       )
     `);
-    
-    console.log("  [DB] Tabla 'users' y 'products' aseguradas.");
 
     const [rows] = await connection.execute('SELECT COUNT(*) as total FROM products');
     if (rows[0].total === 0) {
-      console.log("  [DB] Tabla 'products' vacía. Insertando datos iniciales...");
       await connection.execute(`
         INSERT INTO products (nombre, precio, imagen) VALUES
         ('60 Esquirlas Oníricas', 0.99, 'img/esquirla-60.png'),
@@ -55,7 +50,6 @@ async function inicializarBaseDeDatos() {
         ('Boleto de Suministro Expreso', 4.99, 'img/boleto.png'),
         ('Honor Sin Nombre (Gloria)', 9.99, 'img/pase-gloria.png')
       `);
-      console.log("  [DB] Datos iniciales de productos insertados.");
     }
 
     await connection.execute(`
@@ -84,71 +78,42 @@ async function inicializarBaseDeDatos() {
         PRIMARY KEY (id)
       )
     `);
-    console.log("  [DB] Tabla 'orders' y 'messages' aseguradas.");
 
   } catch (error) {
-    console.error("❌ Error durante la inicialización de la base de datos:", error);
-    throw error; // Lanzamos el error para que el proceso principal falle
+    console.error(error);
   } finally {
-    if (connection) {
-      connection.release();
-      console.log("  [DB] Conexión a la base de datos liberada.");
-    }
+    if (connection) connection.release();
   }
 }
 
 async function main() {
-  try {
-    console.log("🚀 [1/4] Iniciando servidor...");
-    
-    // 1. Inicializar la base de datos primero.
-    console.log("🛠️ [2/4] Preparando base de datos...");
-    await inicializarBaseDeDatos();
-    console.log("✅ [2/4] Base de datos lista.");
+  await inicializarBaseDeDatos();
 
-    // 2. Crear y configurar la aplicación Express.
-    console.log("🌐 [3/4] Configurando la aplicación Express...");
-    const app = express();
-    const PORT = process.env.PORT || 4000;
+  const app = express();
+  const PORT = process.env.PORT || 4000;
 
-    const whitelist = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173,https://frontend-star-rail-qgx3.vercel.app').split(',');
-    const corsOptions = {
-      origin: function (origin, callback) {
-        if (!origin || whitelist.indexOf(origin) !== -1) {
-          callback(null, true);
-        } else {
-          callback(new Error('No permitido por CORS'));
-        }
-      },
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"]
-    };
+  app.use(cors({
+    origin: '*', 
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  }));
 
-    app.use(cors(corsOptions));
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
-    // Configuración de rutas
-    app.use('/api/auth', authRoutes);
-    app.use('/api/products', productRoutes);
-    app.use('/api/orders', orderRoutes);
-    app.use('/api/users', userRoutes);
-    app.use('/api/webpay', webpayRoutes);
-    app.use('/api/dashboard', dashboardRoutes);
-    app.use('/api/messages', messageRoutes);
-    app.get('/', (req, res) => res.send('Backend Star Rail API v1.0 - Healthy'));
-    console.log("✅ [3/4] Aplicación Express configurada.");
+  app.use('/api/auth', authRoutes);
+  app.use('/api/products', productRoutes);
+  app.use('/api/orders', orderRoutes);
+  app.use('/api/users', userRoutes);
+  app.use('/api/webpay', webpayRoutes);
+  app.use('/api/dashboard', dashboardRoutes);
+  app.use('/api/messages', messageRoutes);
 
-    // 3. Iniciar el servidor para escuchar peticiones.
-    console.log("👂 [4/4] Iniciando servidor para escuchar en el puerto...");
-    app.listen(PORT, () => {
-      console.log(`✅ [4/4] Servidor corriendo y escuchando en el puerto ${PORT}`);
-    });
+  app.get('/', (req, res) => res.send('Backend Star Rail API v1.0'));
 
-  } catch (error) {
-    console.error("❌ Error fatal durante el arranque del servidor. El proceso terminará.", error);
-    process.exit(1); // Salir con código de error
-  }
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 }
 
 main();
