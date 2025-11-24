@@ -106,7 +106,7 @@ app.use(express.json());
     next();
   });
 
-app.use('/api/auth', authRoutes); 
+app.use('/api', authRoutes); 
   app.use('/api', authRoutes);      
   // --------------------------------------
 
