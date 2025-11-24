@@ -106,8 +106,9 @@ app.use(express.json());
     next();
   });
 
-  app.use('/api/auth', authRoutes); 
+app.use('/api/auth', authRoutes); 
   app.use('/api', authRoutes);      
+  // --------------------------------------
 
   app.use('/api/products', productRoutes);
   app.use('/api/orders', orderRoutes);
@@ -116,7 +117,7 @@ app.use(express.json());
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/messages', messageRoutes);
 
-  app.get('/', (req, res) => res.send('Backend Star Rail API v1.0'));
+  app.get('/', (req, res) => res.send('Backend Star Rail API v1.0 - Online 🟢'));
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
